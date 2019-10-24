@@ -1,0 +1,47 @@
+from setuptools import setup, find_packages
+from os import path
+
+here = path.abspath(path.dirname(__file__))
+
+requirements = []
+test_requirements = ['pytest']
+
+v_temp = {}
+with open("brightway_projects/version.py") as fp:
+    exec(fp.read(), v_temp)
+version = ".".join((str(x) for x in v_temp['version']))
+
+
+setup(
+    name='bw_exiobase',
+    version="0.1",
+    packages=find_packages(exclude=['tests', 'docs']),
+    author="Chris Mutel",
+    author_email="cmutel@gmail.com",
+    license="BSD 3-clause",
+    # Only if you have non-python data (CSV, etc.). Might need to change the directory name as well.
+    # package_data={'your_name_here': package_files(os.path.join('bw_exiobase', 'data'))},
+    install_requires=[
+    ],
+    url="https://github.com/brightway-lca/bw_exiobase",
+    long_description_content_type='text/markdown',
+    long_description=open('README.md').read(),
+    description='Painless import EXIOBASE into Brightway',
+    classifiers=[
+        'Intended Audience :: End Users/Desktop',
+        'Intended Audience :: Developers',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: BSD License',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering :: Information Analysis',
+        'Topic :: Scientific/Engineering :: Mathematics',
+        'Topic :: Scientific/Engineering :: Visualization',
+    ],
+)
