@@ -1,14 +1,20 @@
 # mrio_common_metadata
 
-`mrio_common_metadata` provides two things:
+`mrio_common_metadata` provides three things:
 
-* A [Data Package](https://frictionlessdata.io/specs/data-package/) specification and implementation of the specification for common MRIO tables
+* A guide on how the [Data Package](https://frictionlessdata.io/specs/data-package/) and [Table Schema](https://frictionlessdata.io/specs/table-schema/) specifications can be used to make MRIO table more consistently formatted and easier to use.
+* Translations of some common MRIO tables to this format
+* Utility code to help make the previous two objectives possible
 
-# `labeled-offset-table` profile
+# Separating data and metadata
 
-The `labeled-offset-table` is a Data Package [Profile](https://frictionlessdata.io/specs/profiles/) for tables with data and labels, where the data and labels are not easily identifiable. For example, the column labels may be given as rows instead of columns, or various label or data offsets may be difficult to determine automatically. The approach of `mrio_common_metadata` is quite simple: The profile requires explicit labelling of all offset and label fields. Here is an example worksheet:
+MRIO tables are often given with weird offsets, and multiple or mixed column/row labels, e.g.
 
 ![Worksheet with column labels as rows](docs/images/worksheet-1.png)
+
+![Worksheet with multiple column and row labels](docs/images/worksheet-2.png)
+
+Working with this type of data requires writing custom code each time. It's a pain. The biggest problem is the mixing of two data types: The metdata on what each row and column represent, and the numerical table that forms the main body of the worksheet. `mrio_common_metadata` takes the position that these two data streams should be stored separately. It also requires that data be stored in common formats (compressed CSV) with metadata that meets the `Data Package` specification.
 
 
 
