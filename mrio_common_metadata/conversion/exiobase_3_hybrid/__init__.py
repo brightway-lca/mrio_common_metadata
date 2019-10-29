@@ -40,7 +40,7 @@ def package_exiobase(version):
 
     with tarfile.open(fp, "w") as tar:
         for pth in DATA_DIR.iterdir():
-            tar.add(DATA_DIR / pth, arcname=str(pth))
+            tar.add(DATA_DIR / pth, arcname=pth.name)
 
 
 def load_metadata(kind):
