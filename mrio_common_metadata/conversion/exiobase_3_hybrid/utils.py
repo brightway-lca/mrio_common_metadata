@@ -42,16 +42,18 @@ def write_compressed_csv(filepath, data):
             writer.writerow(row)
 
 
-def get_numeric_data_iterator(data, rows, cols, skip_zeros=True, only_foreign_keys=False):
+def get_numeric_data_iterator(
+    data, rows, cols, skip_zeros=True, only_foreign_keys=False
+):
     row_offset = len(data) - len(rows)
     col_offset = len(data[0]) - len(cols)
     for row_index, row_data in enumerate(data[row_offset:]):
         for col_index, value in enumerate(row_data[col_offset:]):
-            if (value or not skip_zeros):
+            if value or not skip_zeros:
                 if only_foreign_keys:
-                    yield(rows[row_index][0], cols[col_index][0], value)
+                    yield (rows[row_index][0], cols[col_index][0], value)
                 else:
-                    yield(rows[row_index], cols[col_index], value)
+                    yield (rows[row_index], cols[col_index], value)
 
 
 def get_headers(data, cols, rows):

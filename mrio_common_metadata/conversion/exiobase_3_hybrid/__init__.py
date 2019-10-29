@@ -1,5 +1,12 @@
 from .datapackage import DATAPACKAGE
-from .utils import write_compressed_csv, extract_with_pandas, read_xlsb, get_numeric_data_iterator, get_headers, md5
+from .utils import (
+    write_compressed_csv,
+    extract_with_pandas,
+    read_xlsb,
+    get_numeric_data_iterator,
+    get_headers,
+    md5,
+)
 from .version_config import VERSIONS
 from pathlib import Path
 import bz2
@@ -23,8 +30,8 @@ def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
 
 def package_exiobase(version):
     assert version == "3.3.17 hybrid"
-    for resource in DATAPACKAGE['resources']:
-        resource['hash'] = md5(DATA_DIR / resource['path'])
+    for resource in DATAPACKAGE["resources"]:
+        resource["hash"] = md5(DATA_DIR / resource["path"])
 
     with open(DATA_DIR / "datapackage.json", "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
@@ -44,21 +51,23 @@ def load_metadata(kind):
 
 
 def extract_extension_exchanges(sourcedir, version):
-    activities = load_metadata('activities')
-    extensions = load_metadata('extensions')
+    activities = load_metadata("activities")
+    extensions = load_metadata("extensions")
 
-    dct = VERSIONS[version]['biosphere']['resource']
-    resources = read_xlsb(sourcedir / dct['filename'], dct['worksheet'])
+    dct = VERSIONS[version]["biosphere"]["resource"]
+    resources = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
 
-    dct = VERSIONS[version]['biosphere']['land_use']
-    land_uses = read_xlsb(sourcedir / dct['filename'], dct['worksheet'])
+    dct = VERSIONS[version]["biosphere"]["land_use"]
+    land_uses = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
 
     def drop_compartment(data):
         """Drop compartment label to get in consistent form with other extension matrices"""
         return [row[:2] + row[3:] for row in data]
 
-    dct = VERSIONS[version]['biosphere']['emission']
-    emissions = drop_compartment(read_xlsb(sourcedir / dct['filename'], dct['worksheet']))
+    dct = VERSIONS[version]["biosphere"]["emission"]
+    emissions = drop_compartment(
+        read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
+    )
 
     # Check to make sure our metadata is valid
     resource_headers = get_headers(resources, len(activities), 4)
@@ -76,15 +85,18 @@ def extract_extension_exchanges(sourcedir, version):
     assert [row[1] for row in extensions] == [row[0] for row in data[4:]]
     assert [row[2] for row in extensions] == [row[1] for row in data[4:]]
 
-    write_compressed_csv(DATA_DIR / "extension-exchanges", get_numeric_data_iterator(data, extensions, activities, only_foreign_keys=True))
+    write_compressed_csv(
+        DATA_DIR / "extension-exchanges",
+        get_numeric_data_iterator(data, extensions, activities, only_foreign_keys=True),
+    )
 
 
 def extract_production_exchanges(sourcedir, version):
-    activities = load_metadata('activities')
-    products = load_metadata('products')
+    activities = load_metadata("activities")
+    products = load_metadata("products")
 
-    dct = VERSIONS[version]['production']
-    data = read_xlsb(sourcedir / dct['filename'], dct['worksheet'])
+    dct = VERSIONS[version]["production"]
+    data = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
 
     headers = get_headers(data, len(activities), 8)
 
@@ -105,13 +117,13 @@ def extract_production_exchanges(sourcedir, version):
 
 
 def extract_io_exchanges(sourcedir, version):
-    activities = load_metadata('activities')
-    products = load_metadata('products')
+    activities = load_metadata("activities")
+    products = load_metadata("products")
 
-    dct = VERSIONS[version]['technosphere']
+    dct = VERSIONS[version]["technosphere"]
 
-    wb = pyxlsb.open_workbook(str(sourcedir / dct['filename']))
-    sheet = iter(wb.get_sheet(dct['worksheet']))
+    wb = pyxlsb.open_workbook(str(sourcedir / dct["filename"]))
+    sheet = iter(wb.get_sheet(dct["worksheet"]))
 
     def next_row(sheet):
         return [o.v for o in next(sheet)]
@@ -136,56 +148,57 @@ def extract_io_exchanges(sourcedir, version):
 
             for col_index, value in enumerate(row[5:]):
                 if value:
-                    writer.writerow((products[row_index][0], activities[col_index][0], value))
+                    writer.writerow(
+                        (products[row_index][0], activities[col_index][0], value)
+                    )
 
 
 def extract_metadata(sourcedir, version):
     def reformat_extension(record, obj):
         return (
-            "{}-{}".format(obj['kind'], record['name']),
-            record['name'],
-            record['unit'],
-            record.get('compartment'),
-            obj['kind']
+            "{}-{}".format(obj["kind"], record["name"]),
+            record["name"],
+            record["unit"],
+            record.get("compartment"),
+            obj["kind"],
         )
 
     def reformat_location(record, obj):
-        return (
-            record['code'],
-            record['name'],
-        )
+        return (record["code"], record["name"])
 
     def reformat_activity(record, obj):
         return (
-            "{}-{}".format(record['location'], record['name']),
-            record['location'],
-            record['name'],
-            record['code 1'],
-            record['code 2'],
+            "{}-{}".format(record["location"], record["name"]),
+            record["location"],
+            record["name"],
+            record["code 1"],
+            record["code 2"],
         )
 
     def reformat_product(record, obj):
         return (
-            "{}-{}".format(record['location'], record['name']),
-            record['location'],
-            record['name'],
-            record['code 1'],
-            record['code 2'],
-            record['unit']
+            "{}-{}".format(record["location"], record["name"]),
+            record["location"],
+            record["name"],
+            record["code 1"],
+            record["code 2"],
+            record["unit"],
         )
 
     config = {
-        'extensions': reformat_extension,
-        'locations': reformat_location,
-        'products': reformat_product,
-        'activities': reformat_activity,
+        "extensions": reformat_extension,
+        "locations": reformat_location,
+        "products": reformat_product,
+        "activities": reformat_activity,
     }
 
     for kind, func in config.items():
         data = []
         for obj in VERSIONS[version]["nomenclature"][kind]:
-            mapping = obj['mapping']
-            for record in extract_with_pandas(sourcedir / obj['filename'], obj['worksheet']):
+            mapping = obj["mapping"]
+            for record in extract_with_pandas(
+                sourcedir / obj["filename"], obj["worksheet"]
+            ):
                 record = {mapping[k.strip()]: v for k, v in record.items()}
                 data.append(func(record, obj))
         write_compressed_csv(DATA_DIR / kind, data)
