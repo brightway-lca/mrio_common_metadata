@@ -7,13 +7,13 @@ requirements = []
 test_requirements = ['pytest']
 
 v_temp = {}
-with open("brightway_projects/version.py") as fp:
+with open("mrio_common_metadata/version.py") as fp:
     exec(fp.read(), v_temp)
 version = ".".join((str(x) for x in v_temp['version']))
 
 
 setup(
-    name='bw_exiobase',
+    name='mrio_common_metadata',
     version="0.1",
     packages=find_packages(exclude=['tests', 'docs']),
     author="Chris Mutel",
@@ -21,12 +21,11 @@ setup(
     license="BSD 3-clause",
     # Only if you have non-python data (CSV, etc.). Might need to change the directory name as well.
     # package_data={'your_name_here': package_files(os.path.join('bw_exiobase', 'data'))},
-    install_requires=[
-    ],
-    url="https://github.com/brightway-lca/bw_exiobase",
+    install_requires=[],
+    url="https://github.com/brightway-lca/mrio_common_metadata",
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
-    description='Painless import EXIOBASE into Brightway',
+    description='Common Datapackage schema and utilities for MRIO tables',
     classifiers=[
         'Intended Audience :: End Users/Desktop',
         'Intended Audience :: Developers',
