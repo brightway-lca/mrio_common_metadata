@@ -1,4 +1,4 @@
-__version__ = (0, 1)
+from .version import version as __version__
 
 __all__ = ("get_metadata_resource", "get_numeric_data_iterator", "list_resources")
 
