@@ -1,10 +1,6 @@
 __version__ = (0, 1)
 
-__all__ = (
-    "get_metadata_resource",
-    "get_numeric_data_iterator",
-    "list_resources",
-)
+__all__ = ("get_metadata_resource", "get_numeric_data_iterator", "list_resources")
 
 from .utils import load_compressed_csv, iterate_compressed_csv
 from pathlib import Path
@@ -24,38 +20,51 @@ def _get_resources(dirpath):
 
 def _get_resource(dirpath, resource_name):
     resources = _get_resources(dirpath)
-    assert len([r for r in resources if r['name'] == resource_name]) == 1
-    return next(r for r in resources if r['name'] == resource_name)
+    assert len([r for r in resources if r["name"] == resource_name]) == 1
+    return next(r for r in resources if r["name"] == resource_name)
 
 
 def _get_foreign_key(dirpath, resource, field):
-    fk = next(fk for fk in resource['foreignKeys'] if fk['fields'] == field)
-    return fk['reference']['fields'], _get_resource(dirpath, fk['reference']['resource'])
+    fk = next(fk for fk in resource["foreignKeys"] if fk["fields"] == field)
+    return (
+        fk["reference"]["fields"],
+        _get_resource(dirpath, fk["reference"]["resource"]),
+    )
 
 
 def list_resources(dirpath):
-    return [resource['name'] for resource in _get_resources(dirpath)]
+    return [resource["name"] for resource in _get_resources(dirpath)]
 
 
 def get_metadata_resource(dirpath, resource_name):
     resource = _get_resource(dirpath, resource_name)
-    names = [f['name'] for f in resource['schema']['fields']]
-    data = load_compressed_csv(Path(dirpath) / resource['path'])
+    names = [f["name"] for f in resource["schema"]["fields"]]
+    data = load_compressed_csv(Path(dirpath) / resource["path"])
     return [dict(zip(names, row)) for row in data]
 
 
 def get_numeric_data_iterator(dirpath, resource_name):
     resource = _get_resource(dirpath, resource_name)
 
-    assert len(resource['foreignKeys']) == 2
+    assert len(resource["foreignKeys"]) == 2
 
-    row_id_field, row_resource = _get_foreign_key(dirpath, resource, resource['schema']['fields'][0]['name'])
-    row_mapping = {elem[row_id_field]: elem for elem in get_metadata_resource(dirpath, row_resource['name'])}
+    row_id_field, row_resource = _get_foreign_key(
+        dirpath, resource, resource["schema"]["fields"][0]["name"]
+    )
+    row_mapping = {
+        elem[row_id_field]: elem
+        for elem in get_metadata_resource(dirpath, row_resource["name"])
+    }
 
-    col_id_field, col_resource = _get_foreign_key(dirpath, resource, resource['schema']['fields'][1]['name'])
-    col_mapping = {elem[col_id_field]: elem for elem in get_metadata_resource(dirpath, col_resource['name'])}
+    col_id_field, col_resource = _get_foreign_key(
+        dirpath, resource, resource["schema"]["fields"][1]["name"]
+    )
+    col_mapping = {
+        elem[col_id_field]: elem
+        for elem in get_metadata_resource(dirpath, col_resource["name"])
+    }
 
-    for row, col, value in iterate_compressed_csv(Path(dirpath) / resource['path']):
+    for row, col, value in iterate_compressed_csv(Path(dirpath) / resource["path"]):
         yield row_mapping[row], col_mapping[col], float(value)
 
 
@@ -65,10 +74,6 @@ def get_numeric_data_iterator(dirpath, resource_name):
 
 # class MissingDataPackage(Exception):
 #     pass
-
-
-
-
 
 
 # def _get_dir(label_or_filepath):
@@ -127,7 +132,6 @@ def get_numeric_data_iterator(dirpath, resource_name):
 #     with bz2.open(dp / resource['path'], "rt") as f:
 #         reader = csv.reader(f)
 #         for i, row in enumerate(reader):
-
 
 
 #     row_offset_guess, col_offset_guess = get_offsets(filepath)
