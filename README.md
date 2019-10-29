@@ -3,6 +3,17 @@
 `mrio_common_metadata` provides two things:
 
 * A [Data Package](https://frictionlessdata.io/specs/data-package/) specification and implementation of the specification for common MRIO tables
+* Utility functions to provide python generators to return row and column metadata, and (non-zero) data.
+
+# Processed data
+
+Some MRIO tables are provided in weird formats or behind registration walls, but are provided with open licenses. In this case, this tables have been converted to compressed CSVs and made available for direct download. All code used in processing data can be found in `mrio_common_metadata/processing`.
+
+Please don't abuse these downloads, as I have to pay for the bandwidth myself!
+
+# Data generators
+
+`mrio_common_metadata.get_data_iterator`
 
 # `labeled-offset-table` profile
 
@@ -10,9 +21,60 @@ The `labeled-offset-table` is a Data Package [Profile](https://frictionlessdata.
 
 ![Worksheet with column labels as rows](docs/images/worksheet-1.png)
 
-
+This worksheet would have the following schema:
 
 **Note**: The `labeled-offset-table` uses [0-based indexing](https://en.wikipedia.org/wiki/Zero-based_numbering)!
+
+    "schema": {
+      "rows": {
+        "internal": true,
+        "col-offset": 1,
+        "name": "activities",
+        "fields": [{
+          "label": "country code",
+          "row-index": 0,
+        }, {
+          "label": "name",
+          "row-index": 1,
+        }, {
+          "label": "code 1",
+          "row-index": 2,
+        }, {
+          "label": "code 2",
+          "row-index": 3,
+        }]
+      },
+      "cols": {
+        "internal": true,
+        "axis": "row",
+        "row-offset": 4,
+        "col-offset": 1,
+        "name": "activities",
+        "fields": [{
+          "label": "country code",
+          "row-index": 0,
+        }, {
+          "label": "name",
+          "row-index": 4,
+        }, {
+          "label": "code 1",
+          "row-index": 5,
+        }, {
+          "label": "code 2",
+          "row-index": 6,
+        }, {
+          "label": "unit",
+          "row-index": 7,
+        }]
+      },
+      "data": {
+        "row-offset": 8,
+        "col-offset": 1,
+        "type": "quantitative",
+        "sentries": [614790.55, 614790.55, 5306.091197, 0]
+      }
+    }
+
 
 Import the [EXIOBASE](https://exiobase.eu/) database into Brightway (version 3).
 
