@@ -3,23 +3,34 @@ import bz2
 import csv
 import hashlib
 import pandas as pd
+import pyprind
 import pyxlsb
 
 
-def read_xlsb(filepath, worksheet):
+def read_xlsb(filepath, worksheet, pbar_total=None):
     wb = pyxlsb.open_workbook(str(filepath))
     sheet = wb.get_sheet(worksheet)
-    return [[o.v for o in row] for row in sheet.rows()]
+
+    if not pbar_total:
+        return [[o.v for o in row] for row in sheet.rows()]
+    else:
+        def iterate_rows(sheet, bar):
+            for row in sheet.rows():
+                bar.update()
+                yield row
+
+        print("Loading file: ", filepath)
+        bar = pyprind.ProgBar(pbar_total)
+        data = [[o.v for o in row] for row in iterate_rows(sheet, bar)]
+        print(bar)
+        return data
 
 
-def convert_xlsb(workbook, worksheet, sourcedir, targetdir):
+def convert_xlsb(workbook, worksheet, targetdir):
     wb = pyxlsb.open_workbook(workbook)
     sheet = wb.get_sheet(worksheet)
 
-    directory = CONVERTED_DATA_DIR / Path(workbook).name.replace(".xlsb", "")
-    directory.mkdir(mode=0o755, exist_ok=True)
-
-    with bz2.open(directory / (worksheet + ".csv.bz2"), "wt", newline="") as compressed:
+    with bz2.open(targetdir / (worksheet + ".csv.bz2"), "wt", newline="") as compressed:
         writer = csv.writer(compressed)
         for i, row in enumerate(sheet.rows()):
             writer.writerow([c.v for c in row])

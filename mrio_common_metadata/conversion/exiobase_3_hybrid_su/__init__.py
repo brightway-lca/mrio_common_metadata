@@ -21,6 +21,7 @@ DATA_DIR.mkdir(exist_ok=True)
 
 
 def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
+    sourcedir = Path(sourcedir)
     extract_metadata(sourcedir, version)
     extract_extension_exchanges(sourcedir, version)
     extract_production_exchanges(sourcedir, version)
@@ -36,7 +37,7 @@ def package_exiobase(version):
     with open(DATA_DIR / "datapackage.json", "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
 
-    fp = DATA_DIR / "exiobase-{}.tar".format(version.replace(" ", "-"))
+    fp = DATA_DIR / "exiobase-{}.tar".format(version.relocation(" ", "-"))
 
     with tarfile.open(fp, "w") as tar:
         for pth in DATA_DIR.iterdir():
@@ -91,12 +92,16 @@ def extract_extension_exchanges(sourcedir, version):
     )
 
 
-def extract_production_exchanges(sourcedir, version):
+def extract_su_exchanges(sourcedir, version, kind):
     activities = load_metadata("activities")
     products = load_metadata("products")
 
-    dct = VERSIONS[version]["production"]
-    data = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
+    dct = VERSIONS[version][kind]
+    data = read_xlsb(
+        sourcedir / dct["filename"],
+        dct["worksheet"],
+        pbar_total=len(activities) * len(products) + 4
+    )
 
     headers = get_headers(data, len(activities), 8)
 
