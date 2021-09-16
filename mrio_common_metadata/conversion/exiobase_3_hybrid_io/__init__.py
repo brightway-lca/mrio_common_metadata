@@ -21,6 +21,11 @@ DATA_DIR.mkdir(exist_ok=True)
 
 
 def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
+
+    # sanitize user input: sourcedir must be path
+    if not isinstance(sourcedir, Path):
+        sourcedir = Path(sourcedir)
+
     extract_metadata(sourcedir, version)
     extract_extension_exchanges(sourcedir, version)
     extract_production_exchanges(sourcedir, version)
