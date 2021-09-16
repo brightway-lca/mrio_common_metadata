@@ -19,63 +19,73 @@ import tarfile
 import scipy.sparse
 
 
-DATA_DIR = Path(__file__, "..").resolve() / "data"
-DATA_DIR.mkdir(exist_ok=True)
-
-
-def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
+def convert_exiobase(sourcedir, targetdir=None, version="3.3.17 hybrid"):
 
     # sanitize user input: sourcedir must be path
     if not isinstance(sourcedir, Path):
         sourcedir = Path(sourcedir)
 
-    extract_metadata(sourcedir, version)
-    extract_extension_exchanges(sourcedir, version)
-    extract_production_exchanges(sourcedir, version)
-    extract_io_exchanges(sourcedir, version)
-    package_exiobase(version)
+    # default target directory = source directory/datapackage
+    if targetdir is None:
+        targetdir = sourcedir / "datapackage"
+        targetdir.mkdir(exist_ok=True)
+
+    # extract data
+    extract_metadata(sourcedir, targetdir, version)
+    extract_extension_exchanges(sourcedir, targetdir, version)
+    extract_production_exchanges(sourcedir, targetdir, version)
+    extract_io_exchanges(sourcedir, targetdir, version)
+
+    # turn files into one datapackage
+    package_exiobase(targetdir, version)
+
+    # print and return path of datapackage
+    print(f"Conversion successful: {targetdir}")
+    return targetdir
 
 
-def package_exiobase(version, datafile=None, metafile=None):
+
+def package_exiobase(targetdir, version, datafile=None, metafile=None, flush=True):
     assert version in version_config.VERSIONS.keys()
 
     # delete resource metadata for which no file is present
-    DATAPACKAGE["resources"] = [r for r in DATAPACKAGE["resources"] if (DATA_DIR / r["path"]).exists()]
+    DATAPACKAGE["resources"] = [r for r in DATAPACKAGE["resources"] if (targetdir / r["path"]).exists()]
 
     # create hash for each resource
     for resource in DATAPACKAGE["resources"]:
-        resource["hash"] = md5(DATA_DIR / resource["path"])
+        resource["hash"] = md5(targetdir / resource["path"])
 
     # serialize metadata
     if metafile is None:
-        metafile = DATA_DIR / "datapackage.json"
-    with open(DATA_DIR / metafile, "w") as f:
+        metafile = targetdir / "datapackage.json"
+    with open(targetdir / metafile, "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
 
     # add files to tar
     if datafile is None:
-        datafile = DATA_DIR / "exiobase-{}.tar".format(version.replace(" ", "-"))
+        datafile = targetdir / "exiobase-{}.tar".format(version.replace(" ", "-"))
     with tarfile.open(datafile, "w") as tar:
-        for pth in DATA_DIR.iterdir():
+        for pth in targetdir.iterdir():
             if pth in [datafile, metafile]:
                 continue
             else:
                 # add file to tar
-                tar.add(DATA_DIR / pth, arcname=pth.name)
+                tar.add(targetdir / pth, arcname=pth.name)
                 # delete file
-                (DATA_DIR / pth).unlink()
+                if flush is True:
+                    (targetdir / pth).unlink()
 
 
-def load_metadata(kind):
-    filepath = DATA_DIR / (kind + ".csv.bz2")
+def load_metadata(kind, targetdir):
+    filepath = targetdir / (kind + ".csv.bz2")
     with bz2.open(filepath, "rt") as compressed:
         data = list(csv.reader(compressed))
     return data
 
 
-def extract_extension_exchanges(sourcedir, version):
-    activities = load_metadata("activities")
-    extensions = load_metadata("extensions")
+def extract_extension_exchanges(sourcedir, targetdir, version):
+    activities = load_metadata("activities", targetdir)
+    extensions = load_metadata("extensions", targetdir)
 
     dct = VERSIONS[version]["biosphere"]["resource"]
     resources = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
@@ -109,14 +119,14 @@ def extract_extension_exchanges(sourcedir, version):
     assert [row[2] for row in extensions] == [row[1] for row in data[4:]]
 
     write_compressed_csv(
-        DATA_DIR / "extension-exchanges",
+        targetdir / "extension-exchanges",
         get_numeric_data_iterator(data, extensions, activities, only_foreign_keys=True),
     )
 
 
-def extract_production_exchanges(sourcedir, version):
-    activities = load_metadata("activities")
-    products = load_metadata("products")
+def extract_production_exchanges(sourcedir, targetdir, version):
+    activities = load_metadata("activities", targetdir)
+    products = load_metadata("products", targetdir)
 
     dct = VERSIONS[version]["production"]
     if (sourcedir / dct["filename"]).suffix == '.xlsb':
@@ -140,12 +150,12 @@ def extract_production_exchanges(sourcedir, version):
         for index, value in enumerate(data[8][1:]):
             yield products[index][0], activities[index][0], value
 
-    write_compressed_csv(DATA_DIR / "production-exchanges", single_row_iterator())
+    write_compressed_csv(targetdir / "production-exchanges", single_row_iterator())
 
 
-def extract_io_exchanges(sourcedir, version, sparse=True):
-    activities = load_metadata("activities")
-    products = load_metadata("products")
+def extract_io_exchanges(sourcedir, targetdir, version, sparse=True):
+    activities = load_metadata("activities", targetdir)
+    products = load_metadata("products", targetdir)
 
     dct = VERSIONS[version]["technosphere"]
 
@@ -173,7 +183,8 @@ def extract_io_exchanges(sourcedir, version, sparse=True):
         # write sparse matrix to npz
         if sparse is True:
             sparse_matrix = scipy.sparse.coo_matrix(df.values)
-            scipy.sparse.save_npz(DATA_DIR / "hiot.npz", sparse_matrix)
+            scipy.sparse.save_npz(targetdir / "hiot.npz", sparse_matrix)
+        # write dense matrix to compressed csv
         else:
             with bz2.open(targetdir / "hiot.csv.bz2", "wt", newline="") as compressed:
                 writer = csv.writer(compressed)
@@ -192,7 +203,7 @@ def extract_io_exchanges(sourcedir, version, sparse=True):
         # activity names
         assert headers[1] == [x[2] for x in activities]
 
-        with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
+        with bz2.open(targetdir / "hiot.csv.bz2", "wt", newline="") as compressed:
             writer = csv.writer(compressed)
 
             for row_index, row_raw in enumerate(sheet):
@@ -210,7 +221,7 @@ def extract_io_exchanges(sourcedir, version, sparse=True):
                         )
 
 
-def extract_metadata(sourcedir, version):
+def extract_metadata(sourcedir, targetdir, version):
     def reformat_extension(record, obj):
         return (
             "{}-{}".format(obj["kind"], record["name"]),
@@ -258,4 +269,4 @@ def extract_metadata(sourcedir, version):
             ):
                 record = {mapping[k.strip()]: v for k, v in record.items()}
                 data.append(func(record, obj))
-        write_compressed_csv(DATA_DIR / kind, data)
+        write_compressed_csv(targetdir / kind, data)
