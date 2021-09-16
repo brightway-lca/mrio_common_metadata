@@ -163,6 +163,10 @@ def extract_io_exchanges(sourcedir, version, sparse=True):
         with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
             writer = csv.writer(compressed)
             writer.writerows(df.values)
+        else:
+            with bz2.open(targetdir / "hiot.csv.bz2", "wt", newline="") as compressed:
+                writer = csv.writer(compressed)
+                writer.writerows(df.values)
     else:
         wb = pyxlsb.open_workbook(str(sourcedir / dct["filename"]))
         sheet = iter(wb.get_sheet(dct["worksheet"]))
