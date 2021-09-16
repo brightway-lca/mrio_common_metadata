@@ -54,7 +54,10 @@ def package_exiobase(version):
     fp = DATA_DIR / "exiobase-{}.tar".format(version.replace(" ", "-"))
     with tarfile.open(fp, "w") as tar:
         for pth in DATA_DIR.iterdir():
+            # add file to tar
             tar.add(DATA_DIR / pth, arcname=pth.name)
+            # delete file
+            (DATA_DIR / pth).unlink()
 
 
 def load_metadata(kind):
