@@ -1,3 +1,5 @@
+import pandas
+
 from .datapackage import DATAPACKAGE
 from .utils import (
     write_compressed_csv,
@@ -14,6 +16,7 @@ import csv
 import json
 import pyxlsb
 import tarfile
+import scipy.sparse
 
 
 DATA_DIR = Path(__file__, "..").resolve() / "data"
@@ -21,6 +24,11 @@ DATA_DIR.mkdir(exist_ok=True)
 
 
 def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
+
+    # sanitize user input: sourcedir must be path
+    if not isinstance(sourcedir, Path):
+        sourcedir = Path(sourcedir)
+
     extract_metadata(sourcedir, version)
     extract_extension_exchanges(sourcedir, version)
     extract_production_exchanges(sourcedir, version)
@@ -28,19 +36,34 @@ def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
     package_exiobase(version)
 
 
-def package_exiobase(version):
-    assert version == "3.3.17 hybrid"
+def package_exiobase(version, datafile=None, metafile=None):
+    assert version in version_config.VERSIONS.keys()
+
+    # delete resource metadata for which no file is present
+    DATAPACKAGE["resources"] = [r for r in DATAPACKAGE["resources"] if (DATA_DIR / r["path"]).exists()]
+
+    # create hash for each resource
     for resource in DATAPACKAGE["resources"]:
         resource["hash"] = md5(DATA_DIR / resource["path"])
 
-    with open(DATA_DIR / "datapackage.json", "w") as f:
+    # serialize metadata
+    if metafile is None:
+        metafile = DATA_DIR / "datapackage.json"
+    with open(DATA_DIR / metafile, "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
 
-    fp = DATA_DIR / "exiobase-{}.tar".format(version.replace(" ", "-"))
-
-    with tarfile.open(fp, "w") as tar:
+    # add files to tar
+    if datafile is None:
+        datafile = DATA_DIR / "exiobase-{}.tar".format(version.replace(" ", "-"))
+    with tarfile.open(datafile, "w") as tar:
         for pth in DATA_DIR.iterdir():
-            tar.add(DATA_DIR / pth, arcname=pth.name)
+            if pth in [datafile, metafile]:
+                continue
+            else:
+                # add file to tar
+                tar.add(DATA_DIR / pth, arcname=pth.name)
+                # delete file
+                (DATA_DIR / pth).unlink()
 
 
 def load_metadata(kind):
@@ -96,9 +119,13 @@ def extract_production_exchanges(sourcedir, version):
     products = load_metadata("products")
 
     dct = VERSIONS[version]["production"]
-    data = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
+    if (sourcedir / dct["filename"]).suffix == '.xlsb':
+        data = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
+        headers = get_headers(data, len(activities), 8)
+    elif (sourcedir / dct["filename"]).suffix == '.csv':
+        data = pandas.read_csv(sourcedir / dct["filename"], header=None).transpose()
+        headers = [data[i].to_list() for i in data.columns]
 
-    headers = get_headers(data, len(activities), 8)
 
     # activity location
     assert headers[0] == [x[1] for x in activities]
@@ -116,41 +143,71 @@ def extract_production_exchanges(sourcedir, version):
     write_compressed_csv(DATA_DIR / "production-exchanges", single_row_iterator())
 
 
-def extract_io_exchanges(sourcedir, version):
+def extract_io_exchanges(sourcedir, version, sparse=True):
     activities = load_metadata("activities")
     products = load_metadata("products")
 
     dct = VERSIONS[version]["technosphere"]
 
-    wb = pyxlsb.open_workbook(str(sourcedir / dct["filename"]))
-    sheet = iter(wb.get_sheet(dct["worksheet"]))
+    # load data
+    file = sourcedir / dct["filename"]
+    if file.suffix == ".csv":
 
-    def next_row(sheet):
-        return [o.v for o in next(sheet)]
+        # read data
+        df = pandas.read_csv(file, index_col=list(range(5)), header=list(range(4)))
 
-    headers = [next_row(sheet)[5:] for _ in range(4)]
+        # name indices and columns
+        df.index.names = ['location', 'product', 'product code 1', 'product code 2', 'unit']
+        df.columns.names = ['location', 'activity', 'activity code 1', 'activity code 2']
 
-    # activity location
-    assert headers[0] == [x[1] for x in activities]
-    # activity names
-    assert headers[1] == [x[2] for x in activities]
+        # check if order of locations and products is correct
+        # activity locations
+        assert df.columns.get_level_values('location').to_list() == [x[1] for x in activities]
+        # activity names
+        assert df.columns.get_level_values('activity').to_list() == [x[2] for x in activities]
+        # product location
+        assert df.index.get_level_values('location').to_list() == [x[1] for x in products]
+        # product name
+        assert df.index.get_level_values('product').to_list() == [x[2] for x in products]
 
-    with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
-        writer = csv.writer(compressed)
+        # write sparse matrix to npz
+        if sparse is True:
+            sparse_matrix = scipy.sparse.coo_matrix(df.values)
+            scipy.sparse.save_npz(DATA_DIR / "hiot.npz", sparse_matrix)
+        else:
+            with bz2.open(targetdir / "hiot.csv.bz2", "wt", newline="") as compressed:
+                writer = csv.writer(compressed)
+                writer.writerows(df.values)
+    else:
+        wb = pyxlsb.open_workbook(str(sourcedir / dct["filename"]))
+        sheet = iter(wb.get_sheet(dct["worksheet"]))
 
-        for row_index, row_raw in enumerate(sheet):
-            if not row_index % 250:
-                print("{} / {}".format(row_index, len(activities)))
+        def next_row(sheet):
+            return [o.v for o in next(sheet)]
 
-            row = [o.v for o in row_raw]
-            assert row[0] == products[row_index][1]
-            assert row[1] == products[row_index][2]
+        headers = [next_row(sheet)[5:] for _ in range(4)]
 
-            for col_index, value in enumerate(row[5:]):
-                if value:
-                    writer.writerow(
-                        (products[row_index][0], activities[col_index][0], value)
-                    )
+        # activity location
+        assert headers[0] == [x[1] for x in activities]
+        # activity names
+        assert headers[1] == [x[2] for x in activities]
+
+        with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
+            writer = csv.writer(compressed)
+
+            for row_index, row_raw in enumerate(sheet):
+                if not row_index % 250:
+                    print("{} / {}".format(row_index, len(activities)))
+
+                row = [o.v for o in row_raw]
+                assert row[0] == products[row_index][1]
+                assert row[1] == products[row_index][2]
+
+                for col_index, value in enumerate(row[5:]):
+                    if value:
+                        writer.writerow(
+                            (products[row_index][0], activities[col_index][0], value)
+                        )
 
 
 def extract_metadata(sourcedir, version):

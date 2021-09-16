@@ -21,7 +21,7 @@ setup(
     license="BSD 3-clause",
     # Only if you have non-python data (CSV, etc.). Might need to change the directory name as well.
     # package_data={'your_name_here': package_files(os.path.join('bw_exiobase', 'data'))},
-    install_requires=[],
+    install_requires=['pyxlsb', 'pathlib', 'xlrd', 'pandas', 'openpyxl', 'scipy'],
     url="https://github.com/brightway-lca/mrio_common_metadata",
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
