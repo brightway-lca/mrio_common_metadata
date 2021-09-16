@@ -101,9 +101,13 @@ def extract_production_exchanges(sourcedir, version):
     products = load_metadata("products")
 
     dct = VERSIONS[version]["production"]
-    data = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
+    if (sourcedir / dct["filename"]).suffix == '.xlsb':
+        data = read_xlsb(sourcedir / dct["filename"], dct["worksheet"])
+        headers = get_headers(data, len(activities), 8)
+    elif (sourcedir / dct["filename"]).suffix == '.csv':
+        data = pandas.read_csv(sourcedir / dct["filename"], header=None).transpose()
+        headers = [data[i].to_list() for i in data.columns]
 
-    headers = get_headers(data, len(activities), 8)
 
     # activity location
     assert headers[0] == [x[1] for x in activities]

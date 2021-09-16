@@ -145,8 +145,7 @@ VERSIONS = {
             "worksheet": "HIOT",
         },
         "production": {
-            "filename": "Exiobase_MR_HIOT_2011_v3_3_18_by_prod_tech.xlsb",
-            "worksheet": "Principal_production_vector",
+            "filename": "MR_HIOT_2011_v3_3_18_principal_production.csv",
         },
         "biosphere": {
             "resource": {
