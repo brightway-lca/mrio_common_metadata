@@ -1,3 +1,5 @@
+import pandas
+
 from .datapackage import DATAPACKAGE
 from .utils import (
     write_compressed_csv,
@@ -14,6 +16,7 @@ import csv
 import json
 import pyxlsb
 import tarfile
+import scipy.sparse
 
 
 DATA_DIR = Path(__file__, "..").resolve() / "data"
@@ -125,41 +128,71 @@ def extract_production_exchanges(sourcedir, version):
     write_compressed_csv(DATA_DIR / "production-exchanges", single_row_iterator())
 
 
-def extract_io_exchanges(sourcedir, version):
+def extract_io_exchanges(sourcedir, version, sparse=True):
     activities = load_metadata("activities")
     products = load_metadata("products")
 
     dct = VERSIONS[version]["technosphere"]
 
-    wb = pyxlsb.open_workbook(str(sourcedir / dct["filename"]))
-    sheet = iter(wb.get_sheet(dct["worksheet"]))
+    # load data
+    file = sourcedir / dct["filename"]
+    if file.suffix == ".csv":
 
-    def next_row(sheet):
-        return [o.v for o in next(sheet)]
+        # read data
+        df = pandas.read_csv(file, index_col=list(range(5)), header=list(range(4)))
 
-    headers = [next_row(sheet)[5:] for _ in range(4)]
+        # name indices and columns
+        df.index.names = ['location', 'product', 'product code 1', 'product code 2', 'unit']
+        df.columns.names = ['location', 'activity', 'activity code 1', 'activity code 2']
 
-    # activity location
-    assert headers[0] == [x[1] for x in activities]
-    # activity names
-    assert headers[1] == [x[2] for x in activities]
+        # check if order of locations and products is correct
+        # activity locations
+        assert df.columns.get_level_values('location').to_list() == [x[1] for x in activities]
+        # activity names
+        assert df.columns.get_level_values('activity').to_list() == [x[2] for x in activities]
+        # product location
+        assert df.index.get_level_values('location').to_list() == [x[1] for x in products]
+        # product name
+        assert df.index.get_level_values('product').to_list() == [x[2] for x in products]
 
-    with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
-        writer = csv.writer(compressed)
+        # write sparse matrix to npz
+        if sparse is True:
+            sparse_matrix = scipy.sparse.coo_matrix(df.values)
+            scipy.sparse.save_npz(DATA_DIR / "hiot.npz", sparse_matrix)
+        # write dense matrix to compressed csv
+        with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
+            writer = csv.writer(compressed)
+            writer.writerows(df.values)
+    else:
+        wb = pyxlsb.open_workbook(str(sourcedir / dct["filename"]))
+        sheet = iter(wb.get_sheet(dct["worksheet"]))
 
-        for row_index, row_raw in enumerate(sheet):
-            if not row_index % 250:
-                print("{} / {}".format(row_index, len(activities)))
+        def next_row(sheet):
+            return [o.v for o in next(sheet)]
 
-            row = [o.v for o in row_raw]
-            assert row[0] == products[row_index][1]
-            assert row[1] == products[row_index][2]
+        headers = [next_row(sheet)[5:] for _ in range(4)]
 
-            for col_index, value in enumerate(row[5:]):
-                if value:
-                    writer.writerow(
-                        (products[row_index][0], activities[col_index][0], value)
-                    )
+        # activity location
+        assert headers[0] == [x[1] for x in activities]
+        # activity names
+        assert headers[1] == [x[2] for x in activities]
+
+        with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
+            writer = csv.writer(compressed)
+
+            for row_index, row_raw in enumerate(sheet):
+                if not row_index % 250:
+                    print("{} / {}".format(row_index, len(activities)))
+
+                row = [o.v for o in row_raw]
+                assert row[0] == products[row_index][1]
+                assert row[1] == products[row_index][2]
+
+                for col_index, value in enumerate(row[5:]):
+                    if value:
+                        writer.writerow(
+                            (products[row_index][0], activities[col_index][0], value)
+                        )
 
 
 def extract_metadata(sourcedir, version):
@@ -193,10 +226,6 @@ def extract_metadata(sourcedir, version):
             record["code 2"],
             record["unit"],
         )
-
-    # sanitize user input: sourcedir must be path
-    if not isinstance(sourcedir, Path):
-        sourcedir = Path(sourcedir)
 
     config = {
         "extensions": reformat_extension,

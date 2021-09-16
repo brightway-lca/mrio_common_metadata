@@ -141,7 +141,7 @@ VERSIONS = {
             ],
         },
         "technosphere": {
-            "filename": "Exiobase_MR_HIOT_2011_v3_3_18_by_prod_tech.xlsb",
+            "filename": "MR_HIOT_2011_v3_3_18_by_product_technology.csv",
             "worksheet": "HIOT",
         },
         "production": {
