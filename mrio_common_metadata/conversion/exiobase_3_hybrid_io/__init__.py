@@ -44,7 +44,8 @@ def convert_exiobase(sourcedir, targetdir=None, version="3.3.17 hybrid"):
     return targetdir
 
 
-def package_exiobase(targetdir, version, flush=True):
+
+def package_exiobase(targetdir, version, datafile=None, metafile=None, flush=True):
     assert version in version_config.VERSIONS.keys()
 
     # delete resource metadata for which no file is present
@@ -54,17 +55,25 @@ def package_exiobase(targetdir, version, flush=True):
     for resource in DATAPACKAGE["resources"]:
         resource["hash"] = md5(targetdir / resource["path"])
 
-    with open(targetdir / "datapackage.json", "w") as f:
+    # serialize metadata
+    if metafile is None:
+        metafile = targetdir / "datapackage.json"
+    with open(targetdir / metafile, "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
 
     # add files to tar
-    fp = targetdir / "exiobase-{}.tar".format(version.replace(" ", "-"))
-    with tarfile.open(fp, "w") as tar:
+    if datafile is None:
+        datafile = targetdir / "exiobase-{}.tar".format(version.replace(" ", "-"))
+    with tarfile.open(datafile, "w") as tar:
         for pth in targetdir.iterdir():
-            # add file to datapackage
-            tar.add(targetdir / pth, arcname=pth.name)
-            # delete file
-            (targetdir / pth).unlink()
+            if pth in [datafile, metafile]:
+                continue
+            else:
+                # add file to tar
+                tar.add(targetdir / pth, arcname=pth.name)
+                # delete file
+                if flush is True:
+                    (targetdir / pth).unlink()
 
 
 def load_metadata(kind, targetdir):
