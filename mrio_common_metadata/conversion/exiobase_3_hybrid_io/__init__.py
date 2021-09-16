@@ -38,14 +38,20 @@ def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
 
 def package_exiobase(version):
     assert version in version_config.VERSIONS.keys()
+
+    # delete resource metadata for which no file is present
+    DATAPACKAGE["resources"] = [r for r in DATAPACKAGE["resources"] if (DATA_DIR / r["path"]).exists()]
+
+    # create hash for each resource
     for resource in DATAPACKAGE["resources"]:
         resource["hash"] = md5(DATA_DIR / resource["path"])
 
+    # serialize metadata
     with open(DATA_DIR / "datapackage.json", "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
 
+    # add files to tar
     fp = DATA_DIR / "exiobase-{}.tar".format(version.replace(" ", "-"))
-
     with tarfile.open(fp, "w") as tar:
         for pth in DATA_DIR.iterdir():
             tar.add(DATA_DIR / pth, arcname=pth.name)
@@ -159,10 +165,6 @@ def extract_io_exchanges(sourcedir, version, sparse=True):
         if sparse is True:
             sparse_matrix = scipy.sparse.coo_matrix(df.values)
             scipy.sparse.save_npz(DATA_DIR / "hiot.npz", sparse_matrix)
-        # write dense matrix to compressed csv
-        with bz2.open(DATA_DIR / "hiot.csv.bz2", "wt", newline="") as compressed:
-            writer = csv.writer(compressed)
-            writer.writerows(df.values)
         else:
             with bz2.open(targetdir / "hiot.csv.bz2", "wt", newline="") as compressed:
                 writer = csv.writer(compressed)
