@@ -185,6 +185,10 @@ def extract_metadata(sourcedir, version):
             record["unit"],
         )
 
+    # sanitize user input: sourcedir must be path
+    if not isinstance(sourcedir, Path):
+        sourcedir = Path(sourcedir)
+
     config = {
         "extensions": reformat_extension,
         "locations": reformat_location,
