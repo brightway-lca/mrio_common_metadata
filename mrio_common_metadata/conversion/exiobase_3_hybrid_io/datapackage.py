@@ -27,6 +27,11 @@ References:
             "email": "cmutel@gmail.com",
             "path": "https://chris.mutel.org/",
             "role": "author",
+        },
+        {
+            "title": "Benjamin W. Portner",
+            "email": "benjamin.portner@bauhaus-luftfahrt.net",
+            "role": "author",
         }
     ],
     "image": "https://exiobase.eu/images/basisafbeeldingen/ExioBase_Logo_600.png",
@@ -157,6 +162,7 @@ References:
                 },
             ],
         },
+        # EITHER (writing hiot to csv file)
         {
             "name": "hiot",
             "path": "hiot.csv.bz2",
@@ -164,6 +170,32 @@ References:
             "mediatype": "text/csv+bz2",
             "title": "Values from Input-Output table (excluding production)",
             "format": "csv",
+            "schema": {
+                "fields": [
+                    {"name": "product"},
+                    {"name": "activity"},
+                    {"name": "value", "type": "number"},
+                ]
+            },
+            "foreignKeys": [
+                {
+                    "fields": "product",
+                    "reference": {"resource": "products", "fields": "id"},
+                },
+                {
+                    "fields": "activity",
+                    "reference": {"resource": "activities", "fields": "id"},
+                },
+            ],
+        },
+        # OR (writing hiot to npz)
+        {
+            "name": "hiot",
+            "path": "hiot.npz",
+            "profile": "tabular-data-resource",
+            "mediatype": "text/csv+bz2",
+            "title": "Values from Input-Output table (excluding production)",
+            "format": "npz",
             "schema": {
                 "fields": [
                     {"name": "product"},
