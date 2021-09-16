@@ -27,6 +27,11 @@ References:
             "email": "cmutel@gmail.com",
             "path": "https://chris.mutel.org/",
             "role": "author",
+        },
+        {
+            "title": "Benjamin W. Portner",
+            "email": "benjamin.portner@bauhaus-luftfahrt.net",
+            "role": "author",
         }
     ],
     "image": "https://exiobase.eu/images/basisafbeeldingen/ExioBase_Logo_600.png",
