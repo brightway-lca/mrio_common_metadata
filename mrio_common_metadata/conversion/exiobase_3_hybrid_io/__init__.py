@@ -37,7 +37,7 @@ def convert_exiobase(sourcedir, version="3.3.17 hybrid"):
 
 
 def package_exiobase(version):
-    assert version == "3.3.17 hybrid"
+    assert version in version_config.VERSIONS.keys()
     for resource in DATAPACKAGE["resources"]:
         resource["hash"] = md5(DATA_DIR / resource["path"])
 
