@@ -46,27 +46,32 @@ def convert_exiobase(sourcedir, targetdir=None, version="3.3.17 hybrid"):
 
 
 def package_exiobase(targetdir, version, datafile=None, metafile=None, flush=True):
+
+    # make sure a valid version was given
     assert version in version_config.VERSIONS.keys()
 
-    # delete resource metadata for which no file is present
+    # delete metadata of resources for which no file is present
     DATAPACKAGE["resources"] = [r for r in DATAPACKAGE["resources"] if (targetdir / r["path"]).exists()]
 
     # create hash for each resource
     for resource in DATAPACKAGE["resources"]:
         resource["hash"] = md5(targetdir / resource["path"])
 
-    # serialize metadata
+    # create metadata file
     if metafile is None:
         metafile = targetdir / "datapackage.json"
     with open(targetdir / metafile, "w") as f:
         json.dump(DATAPACKAGE, f, indent=2, ensure_ascii=False)
 
-    # add files to tar
+    # create package file (tar)
     if datafile is None:
         datafile = targetdir / "exiobase-{}.tar".format(version.replace(" ", "-"))
+
+    # add files to package
     with tarfile.open(datafile, "w") as tar:
         for pth in targetdir.iterdir():
-            if pth in [datafile, metafile]:
+            # skip the tar itself
+            if pth in [datafile]:
                 continue
             else:
                 # add file to tar
