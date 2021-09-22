@@ -142,14 +142,33 @@ VERSIONS = {
         },
         "technosphere": {
             "filename": "MR_HIOT_2011_v3_3_18_by_product_technology.csv",
-            "column names": ['location', 'sector name', 'sector code 1', 'sector code 2'],
-            "index names": ['location', 'product', 'product code 1', 'product code 2', 'unit'],
+            "column names": [
+                "location",
+                "sector name",
+                "sector code 1",
+                "sector code 2",
+            ],
+            "index names": [
+                "location",
+                "product",
+                "product code 1",
+                "product code 2",
+                "unit",
+            ],
             "save as": "technosphere.npz",
         },
         "production": {
             "filename": "MR_HIOT_2011_v3_3_18_principal_production.csv",
-            "column names": ['location', 'sector name', 'sector code 1', 'sector code 2',
-                             'product', 'product code 1', 'product code 2', 'unit'],
+            "column names": [
+                "location",
+                "sector name",
+                "sector code 1",
+                "sector code 2",
+                "product",
+                "product code 1",
+                "product code 2",
+                "unit",
+            ],
             "save as": "production.csv.bz2",
         },
         "extensions": {
@@ -157,21 +176,36 @@ VERSIONS = {
                 "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                 "worksheet": "resource_act",
                 "index names": ["name", "unit"],
-                "column names": ['location', 'sector name', 'sector code 1', 'sector code 2']
+                "column names": [
+                    "location",
+                    "sector name",
+                    "sector code 1",
+                    "sector code 2",
+                ],
             },
             "land_use": {
                 "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                 "worksheet": "Land_act",
                 "index names": ["name", "unit"],
-                "column names": ['location', 'sector name', 'sector code 1', 'sector code 2']
+                "column names": [
+                    "location",
+                    "sector name",
+                    "sector code 1",
+                    "sector code 2",
+                ],
             },
             "emission": {
                 "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                 "worksheet": "Emiss_act",
                 "index names": ["name", "unit", "compartment"],
-                "column names": ['location', 'sector name', 'sector code 1', 'sector code 2']
+                "column names": [
+                    "location",
+                    "sector name",
+                    "sector code 1",
+                    "sector code 2",
+                ],
             },
-            "save as": "extensions.csv.bz2"
+            "save as": "extensions.csv.bz2",
         },
-    }
+    },
 }

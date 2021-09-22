@@ -32,7 +32,7 @@ References:
             "title": "Benjamin W. Portner",
             "email": "benjamin.portner@bauhaus-luftfahrt.net",
             "role": "author",
-        }
+        },
     ],
     "image": "https://exiobase.eu/images/basisafbeeldingen/ExioBase_Logo_600.png",
     "resources": [

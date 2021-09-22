@@ -1,5 +1,6 @@
 import hashlib
 
+
 def md5(filepath, blocksize=65536):
     """Generate MD5 hash for file at `filepath`"""
     hasher = hashlib.md5()
