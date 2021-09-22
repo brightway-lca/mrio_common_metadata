@@ -6,11 +6,18 @@ import scipy.sparse
 from .datapackage import DATAPACKAGE
 from .version_config import VERSIONS
 
-class Loader():
 
-    sector_columns = ['location', 'sector name', 'sector code 1', 'sector code 2']
-    product_columns = ['location', 'product', 'product code 1', 'product code 2', 'unit']
-    biosphere_columns = ['name', 'unit', 'compartment']
+class Loader:
+
+    sector_columns = ["location", "sector name", "sector code 1", "sector code 2"]
+    product_columns = [
+        "location",
+        "product",
+        "product code 1",
+        "product code 2",
+        "unit",
+    ]
+    biosphere_columns = ["name", "unit", "compartment"]
 
     def __init__(self, file, metafile="datapackage.json"):
 
@@ -23,32 +30,30 @@ class Loader():
 
         # check if file contains metadata
         if metafile not in tarfile.open(self.file).getnames():
-            raise Exception(f"Error: Datapackage does not contain metadata file {metafile}.")
+            raise Exception(
+                f"Error: Datapackage does not contain metadata file {metafile}."
+            )
         else:
             self.metafile = metafile
             self.metadata = self.load_metadata()
 
-
     def load_metadata(self):
         return json.loads(tarfile.open(self.file).extractfile(self.metafile).read())
-
 
     def get_resource(self, resource_name):
         resources = self.metadata["resources"]
         assert len([r for r in resources if r["name"] == resource_name]) == 1
         return next(r for r in resources if r["name"] == resource_name)
 
-
     def load_principal_production(self):
         resource = self.get_resource("production")
-        compression = resource["path"].split('.')[-1]
+        compression = resource["path"].split(".")[-1]
         index_names = pd.unique(self.sector_columns + self.product_columns).tolist()
         return pd.read_csv(
             tarfile.open(self.file).extractfile(resource["path"]),
             compression=compression,
-            index_col=index_names
-        )['0'].rename("principal production")
-
+            index_col=index_names,
+        )["0"].rename("principal production")
 
     def load_technosphere(self, as_dataframe=False):
         resource = self.get_resource("technosphere")
@@ -56,7 +61,9 @@ class Loader():
         column_names = self.sector_columns
         if Path(resource["path"]).suffix == ".npz":
             # load sparse matrix
-            A = scipy.sparse.load_npz(tarfile.open(self.file).extractfile(resource["path"]))
+            A = scipy.sparse.load_npz(
+                tarfile.open(self.file).extractfile(resource["path"])
+            )
             if as_dataframe is False:
                 return A
             # convert to dense matrix and add labels
@@ -65,11 +72,11 @@ class Loader():
                 df = pd.DataFrame(
                     data=A.todense(),
                     index=pd.MultiIndex.from_frame(prod[index_names]),
-                    columns=pd.MultiIndex.from_frame(prod[column_names])
+                    columns=pd.MultiIndex.from_frame(prod[column_names]),
                 )
                 return df
         elif ".csv" in resource["path"]:
-            compression = resource["path"].split('.')[-1]
+            compression = resource["path"].split(".")[-1]
             df = pd.read_csv(
                 tarfile.open(self.file).extractfile(resource["path"]),
                 compression=compression,
@@ -85,7 +92,7 @@ class Loader():
         resource = self.get_resource("extensions")
         column_names = self.sector_columns
         index_names = self.biosphere_columns
-        compression = resource["path"].split('.')[-1]
+        compression = resource["path"].split(".")[-1]
         df = pd.read_csv(
             tarfile.open(self.file).extractfile(resource["path"]),
             compression=compression,

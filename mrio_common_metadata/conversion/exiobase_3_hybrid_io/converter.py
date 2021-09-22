@@ -9,10 +9,16 @@ from .datapackage import DATAPACKAGE
 from .utils import md5
 
 
-class Converter():
+class Converter:
 
-    sector_columns = ['location', 'sector name', 'sector code 1', 'sector code 2']
-    product_columns = ['location', 'product', 'product code 1', 'product code 2', 'unit']
+    sector_columns = ["location", "sector name", "sector code 1", "sector code 2"]
+    product_columns = [
+        "location",
+        "product",
+        "product code 1",
+        "product code 2",
+        "unit",
+    ]
 
     def __init__(self, sourcedir, targetdir=None, version="3.3.18 hybrid"):
 
@@ -38,7 +44,6 @@ class Converter():
         self.sector_order = None
         self.product_order = None
 
-
     def package_all(self, normalize=True):
 
         # load and convert technosphere, extensions, principal production
@@ -53,11 +58,12 @@ class Converter():
         print(f"Datapackage created: {self.targetdir}")
         return filepath
 
-
     def create_package(self, file=None, metafile="datapackage.json", flush=True):
 
         # delete resource from metadata if file not found
-        DATAPACKAGE["resources"] = [r for r in DATAPACKAGE["resources"] if (self.targetdir / r["path"]).exists()]
+        DATAPACKAGE["resources"] = [
+            r for r in DATAPACKAGE["resources"] if (self.targetdir / r["path"]).exists()
+        ]
 
         # create hash for each resource
         for resource in DATAPACKAGE["resources"]:
@@ -82,7 +88,6 @@ class Converter():
 
         return file
 
-
     def convert_principal_production(self, normalize=True):
 
         # helpers
@@ -92,7 +97,9 @@ class Converter():
         if file.suffix == ".csv":
 
             # load data
-            df = pd.read_csv(self.sourcedir / file, header=list(range(len(meta["column names"])))).T[0]
+            df = pd.read_csv(
+                self.sourcedir / file, header=list(range(len(meta["column names"])))
+            ).T[0]
             df.index.names = meta["column names"]
 
             # delete zero entries if normalization is wanted
@@ -104,12 +111,17 @@ class Converter():
 
             # save principal production as well as sectors and products
             self.principal_production = df
-            self.sector_order = pd.MultiIndex.from_frame(df.reset_index()[self.sector_columns])
-            self.product_order = pd.MultiIndex.from_frame(df.reset_index()[self.product_columns])
+            self.sector_order = pd.MultiIndex.from_frame(
+                df.reset_index()[self.sector_columns]
+            )
+            self.product_order = pd.MultiIndex.from_frame(
+                df.reset_index()[self.product_columns]
+            )
 
         else:
-            raise Exception(f"Error: Unsupported file format defined for principal production file: {file}")
-
+            raise Exception(
+                f"Error: Unsupported file format defined for principal production file: {file}"
+            )
 
     def convert_technosphere(self, normalize=True):
 
@@ -119,9 +131,13 @@ class Converter():
 
         # check input
         if file.suffix != ".csv":
-            raise Exception(f"Error: Unsupported extension for technosphere input file: {file}")
+            raise Exception(
+                f"Error: Unsupported extension for technosphere input file: {file}"
+            )
         if self.principal_production is None:
-            raise Exception("Error: Must load principal production vector before technosphere matrix! Call convert_prinicpal_production().")
+            raise Exception(
+                "Error: Must load principal production vector before technosphere matrix! Call convert_prinicpal_production()."
+            )
 
         # read data
         df = pd.read_csv(
@@ -152,8 +168,9 @@ class Converter():
             df.to_csv(self.targetdir / outfile, compression="infer")
         # other
         else:
-            raise Exception(f"Error: Unsupported output extension for technosphere output file: {outfile}")
-
+            raise Exception(
+                f"Error: Unsupported output extension for technosphere output file: {outfile}"
+            )
 
     def convert_biosphere(self, normalize=True):
 
@@ -165,9 +182,13 @@ class Converter():
 
         # check input
         if file.suffix not in [".xlsx", ".xlsb"]:
-            raise Exception(f"Error: Unsupported extension for biosphere input file: {file}")
+            raise Exception(
+                f"Error: Unsupported extension for biosphere input file: {file}"
+            )
         if self.principal_production is None:
-            raise Exception("Error: Must load principal production vector before technosphere matrix! Call convert_prinicpal_production().")
+            raise Exception(
+                "Error: Must load principal production vector before technosphere matrix! Call convert_prinicpal_production()."
+            )
 
         # read data
         reader = pd.ExcelFile(self.sourcedir / list(meta.values())[0]["filename"])
@@ -199,7 +220,9 @@ class Converter():
         outfile = meta["save as"]
         # as compressed csv
         if ".csv" in outfile:
-            df.to_csv(self.targetdir /outfile, compression="infer")
+            df.to_csv(self.targetdir / outfile, compression="infer")
         # other
         else:
-            raise Exception(f"Error: Unsupported output extension for biosphere output file: {outfile}")
+            raise Exception(
+                f"Error: Unsupported output extension for biosphere output file: {outfile}"
+            )
