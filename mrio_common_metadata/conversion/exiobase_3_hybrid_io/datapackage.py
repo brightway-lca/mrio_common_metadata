@@ -36,32 +36,32 @@ References:
     ],
     "image": "https://exiobase.eu/images/basisafbeeldingen/ExioBase_Logo_600.png",
     "resources": [
-        {
-            "name": "extensions",
-            "path": "extensions.csv.bz2",
-            "profile": "tabular-data-resource",
-            "mediatype": "text/csv+bz2",
-            "title": "Environmental Extensions",
-            "format": "csv",
-            "schema": {
-                "fields": [
-                    {"name": "id"},
-                    {"name": "name"},
-                    {"name": "unit"},
-                    {
-                        "name": "compartment",
-                        "type": ["string", None],
-                        "description": "The environmental compartment; used only for emissions",
-                    },
-                    {
-                        "name": "kind",
-                        "type": "string",
-                        "description": "The kind of environmental extension, e.g. resource consumption, land use, emission",
-                    },
-                ],
-                "primaryKey": "id",
-            },
-        },
+        # {
+        #     "name": "extensions",
+        #     "path": "extensions.csv.bz2",
+        #     "profile": "tabular-data-resource",
+        #     "mediatype": "text/csv+bz2",
+        #     "title": "Environmental Extensions",
+        #     "format": "csv",
+        #     "schema": {
+        #         "fields": [
+        #             {"name": "id"},
+        #             {"name": "name"},
+        #             {"name": "unit"},
+        #             {
+        #                 "name": "compartment",
+        #                 "type": ["string", None],
+        #                 "description": "The environmental compartment; used only for emissions",
+        #             },
+        #             {
+        #                 "name": "kind",
+        #                 "type": "string",
+        #                 "description": "The kind of environmental extension, e.g. resource consumption, land use, emission",
+        #             },
+        #         ],
+        #         "primaryKey": "id",
+        #     },
+        # },
         {
             "name": "products",
             "path": "products.csv.bz2",
@@ -113,8 +113,8 @@ References:
             },
         },
         {
-            "name": "extension-exchanges",
-            "path": "extension-exchanges.csv.bz2",
+            "name": "extensions",
+            "path": "extensions.csv.bz2",
             "profile": "tabular-data-resource",
             "mediatype": "text/csv+bz2",
             "title": "Extension exchange values",
@@ -138,8 +138,8 @@ References:
             ],
         },
         {
-            "name": "production-exchanges",
-            "path": "production-exchanges.csv.bz2",
+            "name": "production",
+            "path": "production.csv.bz2",
             "profile": "tabular-data-resource",
             "mediatype": "text/csv+bz2",
             "title": "Diagonal principal production values",
@@ -164,8 +164,8 @@ References:
         },
         # EITHER (writing hiot to csv file)
         {
-            "name": "hiot",
-            "path": "hiot.csv.bz2",
+            "name": "technosphere",
+            "path": "technosphere.csv.bz2",
             "profile": "tabular-data-resource",
             "mediatype": "text/csv+bz2",
             "title": "Values from Input-Output table (excluding production)",
@@ -190,8 +190,8 @@ References:
         },
         # OR (writing hiot to npz)
         {
-            "name": "hiot",
-            "path": "hiot.npz",
+            "name": "technosphere",
+            "path": "technosphere.npz",
             "profile": "tabular-data-resource",
             "mediatype": "text/csv+bz2",
             "title": "Values from Input-Output table (excluding production)",
