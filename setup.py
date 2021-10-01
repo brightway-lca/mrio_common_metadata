@@ -3,7 +3,7 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-requirements = ['pyxlsb', 'pathlib', 'xlrd', 'pandas', 'openpyxl', 'scipy']
+requirements = ['pyxlsb', 'xlrd', 'pandas', 'openpyxl', 'scipy']
 test_requirements = ['pytest']
 
 v_temp = {}
