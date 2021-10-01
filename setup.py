@@ -14,7 +14,7 @@ version = ".".join((str(x) for x in v_temp['version']))
 
 setup(
     name='mrio_common_metadata',
-    version="0.1.1",
+    version=version,
     packages=find_packages(exclude=['tests', 'docs']),
     author="Chris Mutel",
     author_email="cmutel@gmail.com",
