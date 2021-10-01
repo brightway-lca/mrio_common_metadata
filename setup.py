@@ -3,7 +3,7 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-requirements = []
+requirements = ['pyxlsb', 'pathlib', 'xlrd', 'pandas', 'openpyxl', 'scipy']
 test_requirements = ['pytest']
 
 v_temp = {}
@@ -21,7 +21,7 @@ setup(
     license="BSD 3-clause",
     # Only if you have non-python data (CSV, etc.). Might need to change the directory name as well.
     # package_data={'your_name_here': package_files(os.path.join('bw_exiobase', 'data'))},
-    install_requires=['pyxlsb', 'pathlib', 'xlrd', 'pandas', 'openpyxl', 'scipy'],
+    install_requires=requirements,
     url="https://github.com/brightway-lca/mrio_common_metadata",
     long_description_content_type='text/markdown',
     long_description=open('README.md').read(),
