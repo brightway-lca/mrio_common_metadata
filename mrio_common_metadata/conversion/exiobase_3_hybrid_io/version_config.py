@@ -94,7 +94,7 @@ VERSIONS = {
                     "filename": "Classifications_v_3_3_18.xlsx",
                     "worksheet": "Land",
                     "mapping": {"Land type": "name", "Unit": "unit"},
-                    "kind": "land_use",
+                    "kind": "land use",
                 },
                 {
                     "filename": "Classifications_v_3_3_18.xlsx",
@@ -172,39 +172,74 @@ VERSIONS = {
             "save as": "production.csv.bz2",
         },
         "extensions": {
-            "resource": {
-                "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
-                "worksheet": "resource_act",
-                "index names": ["name", "unit"],
-                "column names": [
-                    "location",
-                    "sector name",
-                    "sector code 1",
-                    "sector code 2",
-                ],
+            "sheets":{
+                "resources": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "resource_act",
+                    "index names": ["name", "unit"],
+                },
+                "land use": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "Land_act",
+                    "index names": ["name", "unit"],
+                },
+                "emissions": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "Emiss_act",
+                    "index names": ["name", "unit", "compartment"],
+                },
+                "unregistered waste emissions": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "Emis_unreg_w_act",
+                    "index names": ["name", "unit", "compartment"],
+                },
+                "waste supply": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "waste_sup_act",
+                    "index names": ["name", "unit"],
+                },
+                "waste use": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "waste_use_act",
+                    "index names": ["name", "unit"],
+                },
+                "packaging supply": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "pack_sup_waste_act",
+                    "index names": ["name", "unit"],
+                },
+                "packaging use": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "pack_use_waste_act",
+                    "index names": ["name", "unit"],
+                },
+                "machinery supply": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "mach_sup_waste_act",
+                    "index names": ["name", "unit"],
+                },
+                "machinery use": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "mach_use_waste_act",
+                    "index names": ["name", "unit"],
+                },
+                "stock additions": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "stock_addition_act",
+                    "index names": ["name", "unit"],
+                },
+                "other supply": {
+                    "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
+                    "worksheet": "crop_res_act",
+                    "index names": ["name", "unit"],
+                },
             },
-            "land_use": {
-                "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
-                "worksheet": "Land_act",
-                "index names": ["name", "unit"],
-                "column names": [
-                    "location",
-                    "sector name",
-                    "sector code 1",
-                    "sector code 2",
-                ],
-            },
-            "emission": {
-                "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
-                "worksheet": "Emiss_act",
-                "index names": ["name", "unit", "compartment"],
-                "column names": [
-                    "location",
-                    "sector name",
-                    "sector code 1",
-                    "sector code 2",
-                ],
-            },
+            "column names": [
+                "location",
+                "sector name",
+                "sector code 1",
+                "sector code 2",
+            ],
             "save as": "extensions.csv.bz2",
         },
     },
