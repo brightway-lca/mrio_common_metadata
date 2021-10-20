@@ -75,7 +75,7 @@ class Loader:
             tarfile.open(self.file).extractfile(resource["path"]),
             compression=compression,
             index_col=index_names,
-        )["0"].rename("principal production")
+        )["value"].rename("principal production")
 
     def load_technosphere(
         self, as_dataframe=False
