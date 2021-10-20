@@ -7,6 +7,7 @@ import tarfile
 from .version_config import VERSIONS
 from .datapackage import DATAPACKAGE
 from .utils import md5
+from typing import Union
 
 
 class Converter:
@@ -20,7 +21,12 @@ class Converter:
         "unit",
     ]
 
-    def __init__(self, sourcedir, targetdir=None, version="3.3.18 hybrid"):
+    def __init__(
+        self,
+        sourcedir: Union[str, Path],
+        targetdir: Union[None, str, Path] = None,
+        version: str = "3.3.18 hybrid",
+    ) -> None:
 
         # sanitize user input: sourcedir must be path
         if not isinstance(sourcedir, Path):
@@ -28,7 +34,7 @@ class Converter:
 
         # make sure a valid version was given
         if version not in VERSIONS.keys():
-            raise Exception(f"Error: Unsupported version: {self.version}")
+            raise Exception(f"Error: Unsupported version: {version}")
 
         # default target directory = source directory/datapackage
         if targetdir is None:
@@ -44,7 +50,7 @@ class Converter:
         self.sector_order = None
         self.product_order = None
 
-    def package_all(self, normalize=True):
+    def package_all(self, normalize: bool = True):
 
         # load and convert technosphere, extensions, principal production
         self.convert_principal_production(normalize)
@@ -58,7 +64,12 @@ class Converter:
         print(f"Datapackage created: {self.targetdir}")
         return filepath
 
-    def create_package(self, file=None, metafile="datapackage.json", flush=True):
+    def create_package(
+        self,
+        file: Union[None, str, Path] = None,
+        metafile: str = "datapackage.json",
+        flush: bool = True,
+    ) -> Path:
 
         # delete resource from metadata if file not found
         DATAPACKAGE["resources"] = [
@@ -76,6 +87,8 @@ class Converter:
         # create tar
         if file is None:
             file = self.targetdir / f"exiobase-{self.version.replace(' ', '-')}.tar"
+        elif isinstance(file, str):
+            file = Path(file)
 
         # add files to package
         with tarfile.open(file, "w") as tar:
@@ -88,7 +101,7 @@ class Converter:
 
         return file
 
-    def convert_principal_production(self, normalize=True):
+    def convert_principal_production(self, normalize: bool = True) -> None:
 
         # helpers
         meta = VERSIONS[self.version]["production"]
@@ -123,7 +136,7 @@ class Converter:
                 f"Error: Unsupported file format defined for principal production file: {file}"
             )
 
-    def convert_technosphere(self, normalize=True):
+    def convert_technosphere(self, normalize: bool = True) -> None:
 
         # helpers
         meta = VERSIONS[self.version]["technosphere"]
@@ -136,7 +149,8 @@ class Converter:
             )
         if self.principal_production is None:
             raise Exception(
-                "Error: Must load principal production vector before technosphere matrix! Call convert_prinicpal_production()."
+                "Error: Must load principal production vector before technosphere "
+                "matrix! Call convert_prinicpal_production()."
             )
 
         # read data
@@ -154,8 +168,7 @@ class Converter:
         # normalize
         if normalize is True:
             df = df / self.principal_production
-            I = np.eye(*df.shape)
-            df = I - df
+            df = np.eye(*df.shape) - df
 
         # save
         # as sparse array
@@ -172,7 +185,7 @@ class Converter:
                 f"Error: Unsupported output extension for technosphere output file: {outfile}"
             )
 
-    def convert_biosphere(self, normalize=True):
+    def convert_biosphere(self, normalize: bool = True) -> None:
 
         # helper variables
         meta = VERSIONS[self.version]["extensions"]
@@ -187,7 +200,8 @@ class Converter:
             )
         if self.principal_production is None:
             raise Exception(
-                "Error: Must load principal production vector before technosphere matrix! Call convert_prinicpal_production()."
+                "Error: Must load principal production vector before technosphere "
+                "matrix! Call convert_prinicpal_production()."
             )
 
         # read data
