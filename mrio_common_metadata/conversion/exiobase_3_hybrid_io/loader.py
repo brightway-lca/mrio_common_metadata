@@ -3,7 +3,7 @@ import pandas as pd
 from pathlib import Path
 import tarfile
 import scipy.sparse
-from typing import Union
+from typing import Union, List
 from .datapackage import DATAPACKAGE
 from .version_config import VERSIONS
 
@@ -18,11 +18,17 @@ class Loader:
         "product code 2",
         "unit",
     ]
-    biosphere_columns = ["name", "unit", "compartment"]
+    biosphere_columns = ["name", "unit", "compartment", "type"]
+    flip_sign_extensions = ["emission", "unregistered waste emission", "waste supply", "packaging supply", "machinery supply", "stock addition"]
 
     def __init__(
-        self, file: Union[str, Path], metafile: str = "datapackage.json"
+        self, file: Union[str, Path], metafile: str = "datapackage.json", version:str="3.3.18 hybrid"
     ) -> None:
+
+        # save inputs
+        self.file = file
+        self.metafile = metafile
+        self.version = version
 
         # check if file is a tar archive
         file = Path(file)
@@ -39,6 +45,10 @@ class Loader:
         else:
             self.metafile = metafile
             self.metadata = self.load_metadata()
+
+        # update column names
+        self.sector_columns = VERSIONS[self.version]["technosphere"]["column names"]
+        self.product_columns = VERSIONS[self.version]["technosphere"]["index names"]
 
     def load_metadata(self) -> dict:
         return json.loads(tarfile.open(self.file).extractfile(self.metafile).read())
@@ -94,9 +104,23 @@ class Loader:
         pass
 
     def load_biosphere(self) -> pd.DataFrame:
+        return self.load_extensions(
+            use_types = ["resource", "land use", "emission"],
+            flip_signs = False,
+        )
+
+    def load_extensions(
+            self,
+            use_types: Union[None, List[str]] = None,
+            flip_signs: bool = False,
+    ) -> pd.DataFrame:
+
+        # get metadata
         resource = self.get_resource("extensions")
         column_names = self.sector_columns
         index_names = self.biosphere_columns
+
+        # load data
         compression = resource["path"].split(".")[-1]
         df = pd.read_csv(
             tarfile.open(self.file).extractfile(resource["path"]),
@@ -104,4 +128,14 @@ class Loader:
             index_col=list(range(len(index_names))),
             header=list(range(len(column_names))),
         )
+
+        # flip signs: all outputs are negative, all inputs are positive
+        if flip_signs:
+            lines = df.query(f"type in {self.flip_sign_extensions}").index
+            df.loc[lines,:] = df.loc[lines,:] * -1
+
+        # filter extension types
+        if use_types is not None:
+            df = df.query(f"type in {use_types}")
+
         return df
