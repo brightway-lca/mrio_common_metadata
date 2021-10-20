@@ -150,7 +150,7 @@ VERSIONS = {
             ],
             "index names": [
                 "location",
-                "product",
+                "product name",
                 "product code 1",
                 "product code 2",
                 "unit",
@@ -164,7 +164,7 @@ VERSIONS = {
                 "sector name",
                 "sector code 1",
                 "sector code 2",
-                "product",
+                "product name",
                 "product code 1",
                 "product code 2",
                 "unit",
@@ -172,7 +172,7 @@ VERSIONS = {
             "save as": "production.csv.bz2",
         },
         "extensions": {
-            "sheets":{
+            "sheets": {
                 "resource": {
                     "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                     "worksheet": "resource_act",

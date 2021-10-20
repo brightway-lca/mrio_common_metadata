@@ -19,7 +19,7 @@ class Converter:
     sector_columns = ["location", "sector name", "sector code 1", "sector code 2"]
     product_columns = [
         "location",
-        "product",
+        "product name",
         "product code 1",
         "product code 2",
         "unit",
@@ -55,6 +55,10 @@ class Converter:
         self.product_order = None
 
     def package_all(self, normalize: bool = True):
+
+        # update sector and product columns names
+        self.sector_columns = VERSIONS[self.version]["technosphere"]["column names"]
+        self.product_columns = VERSIONS[self.version]["technosphere"]["index names"]
 
         # load and convert technosphere, extensions, principal production
         self.convert_principal_production(normalize)
@@ -116,7 +120,7 @@ class Converter:
             # load data
             df = pd.read_csv(
                 self.sourcedir / file, header=list(range(len(meta["column names"])))
-            ).T[0]
+            ).T[0].rename('value')
             df.index.names = meta["column names"]
 
             # delete zero entries if normalization is wanted
