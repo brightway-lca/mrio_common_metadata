@@ -230,7 +230,7 @@ class Converter:
             indices += resource["index names"]
 
         # concatenate into one dataframe
-        df = pd.concat(dfs, ignore_index=True).set_index(pd.unique(indices).tolist())
+        df = pd.concat(dfs, ignore_index=True).set_index(pd.unique(indices).tolist()+["type"])
 
         # sort columns
         df = df[self.sector_order]
