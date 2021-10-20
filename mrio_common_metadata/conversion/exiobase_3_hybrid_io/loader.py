@@ -3,6 +3,7 @@ import pandas as pd
 from pathlib import Path
 import tarfile
 import scipy.sparse
+from typing import Union
 from .datapackage import DATAPACKAGE
 from .version_config import VERSIONS
 
@@ -12,14 +13,16 @@ class Loader:
     sector_columns = ["location", "sector name", "sector code 1", "sector code 2"]
     product_columns = [
         "location",
-        "product",
+        "product name",
         "product code 1",
         "product code 2",
         "unit",
     ]
     biosphere_columns = ["name", "unit", "compartment"]
 
-    def __init__(self, file, metafile="datapackage.json"):
+    def __init__(
+        self, file: Union[str, Path], metafile: str = "datapackage.json"
+    ) -> None:
 
         # check if file is a tar archive
         file = Path(file)
@@ -37,15 +40,15 @@ class Loader:
             self.metafile = metafile
             self.metadata = self.load_metadata()
 
-    def load_metadata(self):
+    def load_metadata(self) -> dict:
         return json.loads(tarfile.open(self.file).extractfile(self.metafile).read())
 
-    def get_resource(self, resource_name):
+    def get_resource(self, resource_name: str) -> dict:
         resources = self.metadata["resources"]
         assert len([r for r in resources if r["name"] == resource_name]) == 1
         return next(r for r in resources if r["name"] == resource_name)
 
-    def load_principal_production(self):
+    def load_principal_production(self) -> pd.DataFrame:
         resource = self.get_resource("production")
         compression = resource["path"].split(".")[-1]
         index_names = pd.unique(self.sector_columns + self.product_columns).tolist()
@@ -55,22 +58,24 @@ class Loader:
             index_col=index_names,
         )["0"].rename("principal production")
 
-    def load_technosphere(self, as_dataframe=False):
+    def load_technosphere(
+        self, as_dataframe=False
+    ) -> Union[pd.DataFrame, scipy.sparse.spmatrix]:
         resource = self.get_resource("technosphere")
         index_names = self.product_columns
         column_names = self.sector_columns
         if Path(resource["path"]).suffix == ".npz":
             # load sparse matrix
-            A = scipy.sparse.load_npz(
+            technosphere = scipy.sparse.load_npz(
                 tarfile.open(self.file).extractfile(resource["path"])
             )
             if as_dataframe is False:
-                return A
+                return technosphere
             # convert to dense matrix and add labels
             else:
                 prod = self.load_principal_production().reset_index()
                 df = pd.DataFrame(
-                    data=A.todense(),
+                    data=technosphere.todense(),
                     index=pd.MultiIndex.from_frame(prod[index_names]),
                     columns=pd.MultiIndex.from_frame(prod[column_names]),
                 )
@@ -88,7 +93,7 @@ class Loader:
             return df
         pass
 
-    def load_biosphere(self):
+    def load_biosphere(self) -> pd.DataFrame:
         resource = self.get_resource("extensions")
         column_names = self.sector_columns
         index_names = self.biosphere_columns
