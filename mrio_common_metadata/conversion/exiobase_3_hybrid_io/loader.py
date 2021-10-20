@@ -4,7 +4,6 @@ from pathlib import Path
 import tarfile
 import scipy.sparse
 from typing import Union, List
-from .datapackage import DATAPACKAGE
 from .version_config import VERSIONS
 
 
@@ -19,10 +18,20 @@ class Loader:
         "unit",
     ]
     biosphere_columns = ["name", "unit", "compartment", "type"]
-    flip_sign_extensions = ["emission", "unregistered waste emission", "waste supply", "packaging supply", "machinery supply", "stock addition"]
+    flip_sign_extensions = [
+        "emission",
+        "unregistered waste emission",
+        "waste supply",
+        "packaging supply",
+        "machinery supply",
+        "stock addition",
+    ]
 
     def __init__(
-        self, file: Union[str, Path], metafile: str = "datapackage.json", version:str="3.3.18 hybrid"
+        self,
+        file: Union[str, Path],
+        metafile: str = "datapackage.json",
+        version: str = "3.3.18 hybrid",
     ) -> None:
 
         # save inputs
@@ -105,14 +114,14 @@ class Loader:
 
     def load_biosphere(self) -> pd.DataFrame:
         return self.load_extensions(
-            use_types = ["resource", "land use", "emission"],
-            flip_signs = False,
+            use_types=["resource", "land use", "emission"],
+            flip_signs=False,
         )
 
     def load_extensions(
-            self,
-            use_types: Union[None, List[str]] = None,
-            flip_signs: bool = False,
+        self,
+        use_types: Union[None, List[str]] = None,
+        flip_signs: bool = False,
     ) -> pd.DataFrame:
 
         # get metadata
@@ -132,7 +141,7 @@ class Loader:
         # flip signs: all outputs are negative, all inputs are positive
         if flip_signs:
             lines = df.query(f"type in {self.flip_sign_extensions}").index
-            df.loc[lines,:] = df.loc[lines,:] * -1
+            df.loc[lines, :] = df.loc[lines, :] * -1
 
         # filter extension types
         if use_types is not None:
