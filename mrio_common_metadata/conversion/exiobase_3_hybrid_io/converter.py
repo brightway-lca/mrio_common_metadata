@@ -6,8 +6,12 @@ import scipy.sparse
 import tarfile
 from .version_config import VERSIONS
 from .datapackage import DATAPACKAGE
-from .utils import md5
+from .utils import md5, append_to_index
 from typing import Union
+
+
+# add helper function to append new columns to pandas multiindex
+pd.DataFrame.append_to_index = append_to_index
 
 
 class Converter:
@@ -55,7 +59,7 @@ class Converter:
         # load and convert technosphere, extensions, principal production
         self.convert_principal_production(normalize)
         self.convert_technosphere(normalize)
-        self.convert_biosphere(normalize)
+        self.convert_extensions(normalize)
 
         # turn files into one datapackage
         filepath = self.create_package()
@@ -185,11 +189,11 @@ class Converter:
                 f"Error: Unsupported output extension for technosphere output file: {outfile}"
             )
 
-    def convert_biosphere(self, normalize: bool = True) -> None:
+    def convert_extensions(self, normalize: bool = True) -> None:
 
         # helper variables
         meta = VERSIONS[self.version]["extensions"]
-        file = self.sourcedir / list(meta.values())[0]["filename"]
+        file = self.sourcedir / list(meta["sheets"].values())[0]["filename"]
         dfs = []
         indices = []
 
@@ -205,18 +209,19 @@ class Converter:
             )
 
         # read data
-        reader = pd.ExcelFile(self.sourcedir / list(meta.values())[0]["filename"])
-        for resource in meta.values():
+        reader = pd.ExcelFile(file)
+        for res_name, resource in meta["sheets"].items():
             if not isinstance(resource, dict):
                 continue
             df = pd.read_excel(
                 reader,
                 sheet_name=resource["worksheet"],
                 index_col=list(range(len(resource["index names"]))),
-                header=list(range(len(resource["column names"]))),
+                header=list(range(len(meta["column names"]))),
             )
             df.index.names = resource["index names"]
-            df.columns.names = resource["column names"]
+            df.columns.names = meta["column names"]
+            df.append_to_index({"type": res_name})
             dfs.append(df.reset_index())
             indices += resource["index names"]
 

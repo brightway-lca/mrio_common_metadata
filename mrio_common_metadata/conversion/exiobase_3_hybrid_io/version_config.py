@@ -173,7 +173,7 @@ VERSIONS = {
         },
         "extensions": {
             "sheets":{
-                "resources": {
+                "resource": {
                     "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                     "worksheet": "resource_act",
                     "index names": ["name", "unit"],
@@ -183,12 +183,12 @@ VERSIONS = {
                     "worksheet": "Land_act",
                     "index names": ["name", "unit"],
                 },
-                "emissions": {
+                "emission": {
                     "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                     "worksheet": "Emiss_act",
                     "index names": ["name", "unit", "compartment"],
                 },
-                "unregistered waste emissions": {
+                "unregistered waste emission": {
                     "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                     "worksheet": "Emis_unreg_w_act",
                     "index names": ["name", "unit", "compartment"],
@@ -223,7 +223,7 @@ VERSIONS = {
                     "worksheet": "mach_use_waste_act",
                     "index names": ["name", "unit"],
                 },
-                "stock additions": {
+                "stock addition": {
                     "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                     "worksheet": "stock_addition_act",
                     "index names": ["name", "unit"],
