@@ -25,6 +25,7 @@ class Loader:
         "packaging supply",
         "machinery supply",
         "stock addition",
+        # "other supply/use",
     ]
 
     def __init__(
@@ -141,6 +142,9 @@ class Loader:
         # flip signs: all outputs are negative, all inputs are positive
         if flip_signs:
             lines = df.query(f"type in {self.flip_sign_extensions}").index
+            df.loc[lines, :] = df.loc[lines, :] * -1
+            # "other supply/use" contains both supply and use -> treat separately
+            lines = df.query(f"type == 'other supply/use' & name.str.contains('supply')").index
             df.loc[lines, :] = df.loc[lines, :] * -1
 
         # filter extension types

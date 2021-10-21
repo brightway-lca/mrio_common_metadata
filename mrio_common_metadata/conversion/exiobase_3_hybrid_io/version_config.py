@@ -228,7 +228,7 @@ VERSIONS = {
                     "worksheet": "stock_addition_act",
                     "index names": ["name", "unit"],
                 },
-                "other supply": {
+                "other supply/use": {
                     "filename": "MR_HIOT_2011_v3_3_18_extensions.xlsb",
                     "worksheet": "crop_res_act",
                     "index names": ["name", "unit"],
