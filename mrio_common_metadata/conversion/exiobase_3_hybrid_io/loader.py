@@ -9,14 +9,6 @@ from .version_config import VERSIONS
 
 class Loader:
 
-    sector_columns = ["location", "sector name", "sector code 1", "sector code 2"]
-    product_columns = [
-        "location",
-        "product name",
-        "product code 1",
-        "product code 2",
-        "unit",
-    ]
     biosphere_columns = ["name", "unit", "compartment", "type"]
     flip_sign_extensions = [
         "emission",
@@ -59,6 +51,9 @@ class Loader:
         # update column names
         self.sector_columns = VERSIONS[self.version]["technosphere"]["column names"]
         self.product_columns = VERSIONS[self.version]["technosphere"]["index names"]
+        self.principal_production_columns = VERSIONS[self.version]["production"][
+            "column names"
+        ]
 
     def load_metadata(self) -> dict:
         return json.loads(tarfile.open(self.file).extractfile(self.metafile).read())
@@ -68,15 +63,22 @@ class Loader:
         assert len([r for r in resources if r["name"] == resource_name]) == 1
         return next(r for r in resources if r["name"] == resource_name)
 
-    def load_principal_production(self) -> pd.DataFrame:
+    def load_principal_production(
+        self, add_product_location_col: bool = False
+    ) -> pd.DataFrame:
         resource = self.get_resource("production")
         compression = resource["path"].split(".")[-1]
-        index_names = pd.unique(self.sector_columns + self.product_columns).tolist()
-        return pd.read_csv(
+        index_names = self.principal_production_columns
+        df = pd.read_csv(
             tarfile.open(self.file).extractfile(resource["path"]),
             compression=compression,
             index_col=index_names,
         )["value"].rename("principal production")
+        if add_product_location_col is True:
+            df = df.to_frame()
+            df["product location"] = df.index.get_level_values("sector location")
+            df = df.set_index("product location", append=True)[df.columns[0]]
+        return df
 
     def load_technosphere(
         self, as_dataframe=False
@@ -93,7 +95,9 @@ class Loader:
                 return technosphere
             # convert to dense matrix and add labels
             else:
-                prod = self.load_principal_production().reset_index()
+                prod = self.load_principal_production(
+                    add_product_location_col=True
+                ).reset_index()
                 df = pd.DataFrame(
                     data=technosphere.todense(),
                     index=pd.MultiIndex.from_frame(prod[index_names]),
@@ -113,10 +117,10 @@ class Loader:
             return df
         pass
 
-    def load_biosphere(self) -> pd.DataFrame:
+    def load_biosphere(self, flip_signs: bool = False) -> pd.DataFrame:
         return self.load_extensions(
             use_types=["resource", "land use", "emission"],
-            flip_signs=False,
+            flip_signs=flip_signs,
         )
 
     def load_extensions(
@@ -144,7 +148,9 @@ class Loader:
             lines = df.query(f"type in {self.flip_sign_extensions}").index
             df.loc[lines, :] = df.loc[lines, :] * -1
             # "other supply/use" contains both supply and use -> treat separately
-            lines = df.query(f"type == 'other supply/use' & name.str.contains('supply')").index
+            lines = df.query(
+                f"type == 'other supply/use' & name.str.contains('supply')"
+            ).index
             df.loc[lines, :] = df.loc[lines, :] * -1
 
         # filter extension types

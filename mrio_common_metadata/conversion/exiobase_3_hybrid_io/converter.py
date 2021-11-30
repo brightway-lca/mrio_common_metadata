@@ -15,16 +15,6 @@ pd.DataFrame.append_to_index = append_to_index
 
 
 class Converter:
-
-    sector_columns = ["location", "sector name", "sector code 1", "sector code 2"]
-    product_columns = [
-        "location",
-        "product name",
-        "product code 1",
-        "product code 2",
-        "unit",
-    ]
-
     def __init__(
         self,
         sourcedir: Union[str, Path],
@@ -59,6 +49,9 @@ class Converter:
         # update sector and product columns names
         self.sector_columns = VERSIONS[self.version]["technosphere"]["column names"]
         self.product_columns = VERSIONS[self.version]["technosphere"]["index names"]
+        self.principal_production_columns = VERSIONS[self.version]["production"][
+            "column names"
+        ]
 
         # load and convert technosphere, extensions, principal production
         self.convert_principal_production(normalize)
@@ -118,9 +111,13 @@ class Converter:
         if file.suffix == ".csv":
 
             # load data
-            df = pd.read_csv(
-                self.sourcedir / file, header=list(range(len(meta["column names"])))
-            ).T[0].rename('value')
+            df = (
+                pd.read_csv(
+                    self.sourcedir / file, header=list(range(len(meta["column names"])))
+                )
+                .T[0]
+                .rename("value")
+            )
             df.index.names = meta["column names"]
 
             # delete zero entries if normalization is wanted
@@ -129,6 +126,16 @@ class Converter:
 
             # save converted
             df.to_csv(self.targetdir / meta["save as"], compression="infer")
+
+            # add product location by duplicating sector locations
+            # necessary to get correct self.product_order in the next step
+            if (
+                "product location" not in df.index.names
+                and "product location" in self.product_columns
+            ):
+                df = df.to_frame()
+                df["product location"] = df.index.get_level_values("sector location")
+                df = df.set_index("product location", append=True)[df.columns[0]]
 
             # save principal production as well as sectors and products
             self.principal_production = df
@@ -230,7 +237,9 @@ class Converter:
             indices += resource["index names"]
 
         # concatenate into one dataframe
-        df = pd.concat(dfs, ignore_index=True).set_index(pd.unique(indices).tolist()+["type"])
+        df = pd.concat(dfs, ignore_index=True).set_index(
+            pd.unique(indices).tolist() + ["type"]
+        )
 
         # sort columns
         df = df[self.sector_order]
