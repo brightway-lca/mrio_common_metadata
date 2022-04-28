@@ -1,5 +1,5 @@
 pyxlsb
-pathlib
 xlrd
 pandas
 scipy
+openpyxl
